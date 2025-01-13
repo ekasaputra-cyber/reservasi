@@ -73,7 +73,7 @@
             </li>
 
             <li class="nav-item">
-            <a class="nav-link" href="ulasan_list.php">
+            <a class="nav-link" href="ulasan.php">
                 <i class="bi bi-heart"></i>
                 <span>Ulasan</span>
             </a>

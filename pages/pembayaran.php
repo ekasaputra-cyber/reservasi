@@ -7,29 +7,59 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reservation_id']) && i
     $payment_amount = $_POST['payment_amount'];
     $payment_method = $_POST['payment_method'];
 
-    // Query untuk mengambil data reservasi berdasarkan ID
-    $sql = "SELECT * FROM reservasi WHERE ReservationID = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $reservation_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        // Menyimpan data pembayaran ke tabel pembayaran
-        $payment_sql = "INSERT INTO pembayaran (ReservationID, Amount, PaymentMethod) VALUES (?, ?, ?)";
-        $payment_stmt = $conn->prepare($payment_sql);
-        $payment_stmt->bind_param("ids", $reservation_id, $payment_amount, $payment_method);
-        $payment_stmt->execute();
-
-        // Mengubah status reservasi menjadi 'Confirmed' setelah pembayaran
-        $update_sql = "UPDATE reservasi SET Status = 'Confirmed' WHERE ReservationID = ?";
-        $update_stmt = $conn->prepare($update_sql);
-        $update_stmt->bind_param("i", $reservation_id);
-        $update_stmt->execute();
-
-        echo "Pembayaran berhasil! Status reservasi telah diperbarui menjadi 'Confirmed'.";
+    // Validasi jumlah pembayaran
+    if (!is_numeric($payment_amount) || $payment_amount <= 0) {
+        echo "<p>Jumlah pembayaran tidak valid.</p>";
     } else {
-        echo "Reservasi tidak ditemukan.";
+        // Query untuk mengambil data reservasi berdasarkan ID
+        $sql = "SELECT r.RoomID, k.Price, r.CheckInDate, r.CheckOutDate
+                FROM reservasi r
+                JOIN kamar k ON r.RoomID = k.RoomID
+                WHERE r.ReservationID = ?";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $reservation_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $room_price = $row['Price'];
+            $check_in = new DateTime($row['CheckInDate']);
+            $check_out = new DateTime($row['CheckOutDate']);
+
+            // Menghitung jumlah malam
+            $interval = $check_in->diff($check_out);
+            $nights = $interval->days;
+
+            if ($nights == 0) {
+                $nights = 1;  // Anggap durasi menginap 1 malam
+            }
+
+            // Menghitung total harga
+            $total_price = $room_price * $nights;
+
+            // Memastikan jumlah pembayaran sesuai dengan total harga
+            if ($payment_amount == $total_price) {
+                // Menyimpan data pembayaran ke tabel pembayaran
+                $payment_sql = "INSERT INTO pembayaran (ReservationID, Amount, PaymentMethod) VALUES (?, ?, ?)";
+                $payment_stmt = $conn->prepare($payment_sql);
+                $payment_stmt->bind_param("ids", $reservation_id, $payment_amount, $payment_method);
+                $payment_stmt->execute();
+
+                // Mengubah status reservasi menjadi 'Confirmed' setelah pembayaran
+                $update_sql = "UPDATE reservasi SET Status = 'Confirmed' WHERE ReservationID = ?";
+                $update_stmt = $conn->prepare($update_sql);
+                $update_stmt->bind_param("i", $reservation_id);
+                $update_stmt->execute();
+
+                echo "<p>Pembayaran berhasil! Status reservasi telah diperbarui menjadi 'Confirmed'.</p>";
+            } else {
+                echo "<p>Jumlah pembayaran tidak sesuai dengan total harga reservasi.</p>";
+            }
+        } else {
+            echo "<p>Reservasi tidak ditemukan.</p>";
+        }
     }
 }
 ?>
@@ -79,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reservation_id']) && i
                 <!-- Input jumlah pembayaran -->
                 <div class="form-group">
                   <label for="payment_amount">Jumlah Pembayaran</label>
-                  <input type="number" class="form-control" id="payment_amount" name="payment_amount" required>
+                  <input type="number" class="form-control" id="payment_amount" name="payment_amount" required readonly>
                 </div>
 
                 <!-- Pilih metode pembayaran -->
@@ -94,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reservation_id']) && i
 
                 <button type="submit" class="btn btn-primary mt-3">Proses Pembayaran</button>
               </form>
+
             </div>
           </div>
         </div>
@@ -105,22 +136,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reservation_id']) && i
 
   <script>
     function fetchReservationDetails() {
-      var reservation_id = document.getElementById('reservation_id').value;
+        var reservation_id = document.getElementById('reservation_id').value;
 
-      if (reservation_id) {
-        // Gunakan AJAX untuk mengambil detail reservasi berdasarkan ID
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'get_reservation_details.php?reservation_id=' + reservation_id, true);
-        xhr.onload = function () {
-          if (xhr.status == 200) {
-            document.getElementById('reservation_details').innerHTML = xhr.responseText;
-          }
-        };
-        xhr.send();
-      } else {
-        document.getElementById('reservation_details').innerHTML = '';
-      }
+        if (reservation_id) {
+            // Gunakan AJAX untuk mengambil detail reservasi berdasarkan ID
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'get-detail-reservasi.php?reservation_id=' + reservation_id, true);
+            xhr.onload = function () {
+                if (xhr.status == 200) {
+                    // Menyisipkan detail reservasi ke dalam elemen
+                    document.getElementById('reservation_details').innerHTML = xhr.responseText;
+
+                    // Mengambil total amount dari elemen hidden dan mengisi input pembayaran otomatis
+                    var totalAmount = document.getElementById('total_amount').value;
+                    if (totalAmount) {
+                        document.getElementById('payment_amount').value = totalAmount;
+                    }
+                }
+            };
+            xhr.send();
+        } else {
+            document.getElementById('reservation_details').innerHTML = '';
+        }
     }
-  </script>
+</script>
+
+
 </body>
 </html>

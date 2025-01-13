@@ -104,11 +104,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <select class="form-select" name="RoomID" id="RoomID" required>
                       <?php
                       // Menampilkan daftar kamar yang tersedia
-                      $sql_kamar = "SELECT RoomID, RoomNumber FROM kamar WHERE Status = 'Available'";
-                      $result = $conn->query($sql_kamar);
-                      while ($row = $result->fetch_assoc()) {
-                        echo "<option value='{$row['RoomID']}'>{$row['RoomNumber']}</option>";
-                      }
+                      $sql_kamar = "
+                      SELECT k.RoomID, k.RoomNumber, rt.RoomType
+                      FROM kamar k
+                      JOIN roomtype rt ON k.RoomTypeID = rt.RoomTypeID
+                      WHERE k.Status = 'Available'
+                  ";
+                  $result = $conn->query($sql_kamar);
+                  while ($row = $result->fetch_assoc()) {
+                      echo "<option value='{$row['RoomID']}'>
+                              {$row['RoomNumber']} - {$row['RoomType']}
+                            </option>";
+                  }
+                  
                       ?>
                     </select>
                   </div>
