@@ -66,7 +66,7 @@
             </li>
 
             <li class="nav-item">
-            <a class="nav-link" href="pembayaran_list.php">
+            <a class="nav-link" href="pembayaran.php">
                 <i class="bi bi-heart"></i>
                 <span>Pembayaran</span>
             </a>
@@ -76,6 +76,13 @@
             <a class="nav-link" href="ulasan_list.php">
                 <i class="bi bi-heart"></i>
                 <span>Ulasan</span>
+            </a>
+            </li>
+
+            <li class="nav-item">
+            <a class="nav-link" href="roomtype.php">
+                <i class="bi bi-heart"></i>
+                <span>Tipe Room</span>
             </a>
             </li>
             

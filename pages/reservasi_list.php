@@ -41,7 +41,7 @@
                 <tbody>
                   <?php
                   // Query untuk mendapatkan data reservasi dan pelanggan
-                  $sql = "SELECT r.ReservationID, p.FullName, k.RoomNumber, r.CheckInDate, r.CheckOutDate, r.Status
+                  $sql = "SELECT r.ReservationID, p.FullName, k.RoomNumber, r.CheckInDate, r.CheckOutDate, r.Status, k.RoomID
                           FROM reservasi r
                           JOIN pelanggan p ON r.CustomerID = p.CustomerID
                           JOIN kamar k ON r.RoomID = k.RoomID";
@@ -49,6 +49,14 @@
 
                   if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
+                      // Jika status reservasi "Confirmed" atau "Paid", ubah status kamar menjadi "Occupied"
+                      if ($row['Status'] == 'Confirmed' || $row['Status'] == 'Paid') {
+                          $update_kamar_sql = "UPDATE kamar SET Status = 'Occupied' WHERE RoomID = ?";
+                          $stmt = $conn->prepare($update_kamar_sql);
+                          $stmt->bind_param("i", $row['RoomID']);
+                          $stmt->execute();
+                      }
+
                       echo "<tr>
                               <td>{$row['ReservationID']}</td>
                               <td>{$row['FullName']}</td>
@@ -56,11 +64,20 @@
                               <td>{$row['CheckInDate']}</td>
                               <td>{$row['CheckOutDate']}</td>
                               <td>{$row['Status']}</td>
-                              <td>
-                                <a href='reservasi_edit.php?id={$row['ReservationID']}'>Edit</a> |
-                                <a href='reservasi_delete.php?id={$row['ReservationID']}'>Delete</a>
-                              </td>
-                            </tr>";
+                              <td>";
+                      
+                      // Tombol tindakan berdasarkan status reservasi
+                      if ($row['Status'] == 'Pending') {
+                          echo "<a href='reservasi_edit.php?id={$row['ReservationID']}'>Edit</a> |
+                                <a href='reservasi_batal.php?id={$row['ReservationID']}'>Batalkan</a>";
+                      } elseif ($row['Status'] == 'Confirmed' || $row['Status'] == 'Paid') {
+                          // Tombol "Check-In" jika belum check-in
+                          echo "<a href='cekin.php?id={$row['ReservationID']}'>Sudah Check-In</a>";
+                      } elseif ($row['Status'] == 'CheckedIn') {
+                          // Tombol "Check-Out" jika sudah check-in
+                          echo "<a href='cekout.php?id={$row['ReservationID']}'>Sudah Check-Out</a>";
+                      }
+                      echo "</td></tr>";
                     }
                   } else {
                     echo "<tr><td colspan='7' class='text-center'>Tidak ada data reservasi ditemukan</td></tr>";

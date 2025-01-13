@@ -5,24 +5,34 @@ include('../includes/db_connect.php');
 $sqlRoomTypes = "SELECT RoomTypeID, RoomType, DefaultPrice FROM roomtype";
 $resultRoomTypes = $conn->query($sqlRoomTypes);
 
+// Menangani form pengiriman untuk tambah kamar
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $RoomNumber = $_POST['RoomNumber'];
+    // Ambil RoomTypeID dan Status dari form
     $RoomTypeID = $_POST['RoomTypeID'];
     $Price = $_POST['Price']; // Harga akan diambil dari DefaultPrice
     $Status = $_POST['Status'];
 
+    // Mendapatkan nomor kamar otomatis
+    // Ambil RoomNumber terbesar yang ada di tabel kamar
+    $sqlMaxRoomNumber = "SELECT MAX(CAST(RoomNumber AS UNSIGNED)) AS MaxRoomNumber FROM kamar";
+    $resultMaxRoomNumber = $conn->query($sqlMaxRoomNumber);
+    $rowMaxRoomNumber = $resultMaxRoomNumber->fetch_assoc();
+    $nextRoomNumber = str_pad($rowMaxRoomNumber['MaxRoomNumber'] + 1, 4, '0', STR_PAD_LEFT); // Format menjadi 4 digit (misal 0001)
+
     // Insert kamar
-    $sql = "INSERT INTO kamar (RoomNumber, RoomTypeID, Price, Status) VALUES ('$RoomNumber', '$RoomTypeID', '$Price', '$Status')";
+    $sql = "INSERT INTO kamar (RoomNumber, RoomTypeID, Price, Status) VALUES ('$nextRoomNumber', '$RoomTypeID', '$Price', '$Status')";
     if ($conn->query($sql) === TRUE) {
-        header("Location: kamar_list.php"); // Redirect ke daftar kamar
+        header("Location: kamar_list.php"); // Redirect ke daftar kamar setelah berhasil menambah kamar
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <?php include('../includes/header.php'); ?>
+
 <body>
   <main id="main" class="main">
     <div class="pagetitle">
@@ -41,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="row mb-3">
                   <label for="RoomNumber" class="col-sm-2 col-form-label">Room Number</label>
                   <div class="col-sm-10">
-                    <input type="text" class="form-control" name="RoomNumber" id="RoomNumber" placeholder="Room Number" required>
+                    <input type="text" class="form-control" name="RoomNumber" id="RoomNumber" value="<?php echo isset($nextRoomNumber) ? $nextRoomNumber : ''; ?>" readonly>
                   </div>
                 </div>
 

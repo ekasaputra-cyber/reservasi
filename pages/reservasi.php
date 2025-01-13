@@ -1,5 +1,6 @@
-<?php include('../includes/db_connect.php'); ?>
 <?php
+include('../includes/db_connect.php');
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Ambil data dari form
     $FullName = $_POST['FullName'];
@@ -10,22 +11,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $CheckInDate = $_POST['CheckInDate'];
     $CheckOutDate = $_POST['CheckOutDate'];
 
-    // Insert data pelanggan ke tabel pelanggan
-    $sql_pelanggan = "INSERT INTO pelanggan (FullName, PhoneNumber, Email, Address) VALUES ('$FullName', '$PhoneNumber', '$Email', '$Address')";
-    if ($conn->query($sql_pelanggan) === TRUE) {
-        $CustomerID = $conn->insert_id; // Ambil CustomerID yang baru saja ditambahkan
-
-        // Insert data reservasi
-        $sql_reservasi = "INSERT INTO reservasi (CustomerID, RoomID, CheckInDate, CheckOutDate, Status) 
-                          VALUES ('$CustomerID', '$RoomID', '$CheckInDate', '$CheckOutDate', 'Pending')";
-        if ($conn->query($sql_reservasi) === TRUE) {
-            // Redirect ke halaman daftar reservasi
-            header("Location: reservasi_list.php");
-        } else {
-            echo "Error: " . $sql_reservasi . "<br>" . $conn->error;
-        }
+    // Validasi tanggal (pastikan check-out lebih dari check-in)
+    if (new DateTime($CheckInDate) > new DateTime($CheckOutDate)) {
+        echo "<script>alert('Tanggal check-out tidak bisa lebih awal dari tanggal check-in.');</script>";
     } else {
-        echo "Error: " . $sql_pelanggan . "<br>" . $conn->error;
+        // Insert data pelanggan ke tabel pelanggan menggunakan prepared statement
+        $stmt_pelanggan = $conn->prepare("INSERT INTO pelanggan (FullName, PhoneNumber, Email, Address) VALUES (?, ?, ?, ?)");
+        $stmt_pelanggan->bind_param("ssss", $FullName, $PhoneNumber, $Email, $Address);
+
+        if ($stmt_pelanggan->execute()) {
+            $CustomerID = $conn->insert_id; // Ambil CustomerID yang baru saja ditambahkan
+
+            // Insert data reservasi menggunakan prepared statement
+            $stmt_reservasi = $conn->prepare("INSERT INTO reservasi (CustomerID, RoomID, CheckInDate, CheckOutDate, Status) VALUES (?, ?, ?, ?, 'Pending')");
+            $stmt_reservasi->bind_param("iiss", $CustomerID, $RoomID, $CheckInDate, $CheckOutDate);
+
+            if ($stmt_reservasi->execute()) {
+                // Update status kamar menjadi "Occupied"
+                $stmt_update_kamar = $conn->prepare("UPDATE kamar SET Status = 'Occupied' WHERE RoomID = ?");
+                $stmt_update_kamar->bind_param("i", $RoomID);
+                $stmt_update_kamar->execute();
+
+                // Redirect ke halaman daftar reservasi
+                header("Location: reservasi_list.php");
+                exit();
+            } else {
+                echo "<script>alert('Error: " . $stmt_reservasi->error . "');</script>";
+            }
+        } else {
+            echo "<script>alert('Error: " . $stmt_pelanggan->error . "');</script>";
+        }
     }
 }
 ?>
@@ -128,5 +143,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   </main>
 
   <?php include('../includes/footer.php'); ?>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const form = document.querySelector("form");
+      form.addEventListener("submit", function(event) {
+        const checkinDate = document.getElementById("CheckInDate").value;
+        const checkoutDate = document.getElementById("CheckOutDate").value;
+
+        // Validasi Tanggal Check-in dan Check-out
+        if (new Date(checkinDate) > new Date(checkoutDate)) {
+          alert("Tanggal check-out tidak bisa lebih awal dari tanggal check-in.");
+          event.preventDefault();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
