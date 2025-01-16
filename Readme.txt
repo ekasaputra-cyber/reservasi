@@ -1,6 +1,7 @@
-Thanks for downloading this template!
+Ini Adalah contoh sederhana reservasi hotel
+untuk menjalankannya, donload terlebih dahulu
+lalu buat database dengan nama reservasi_hotel lalu impor dari db yang sudah saya sertakan
+dan taruh file di dalam folder htdocs xampp
+lalu jalankan di browser
 
-Template Name: NiceAdmin
-Template URL: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/
-Author: BootstrapMade.com
-License: https://bootstrapmade.com/license/
+Terima Kasih 

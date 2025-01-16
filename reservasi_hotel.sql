@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 10, 2025 at 06:21 PM
+-- Generation Time: Jan 16, 2025 at 12:02 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -35,13 +35,6 @@ CREATE TABLE `kamar` (
   `Status` enum('Available','Occupied','Maintenance') DEFAULT 'Available'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `kamar`
---
-
-INSERT INTO `kamar` (`RoomID`, `RoomNumber`, `RoomTypeID`, `Price`, `Status`) VALUES
-(7, '0001', 1, 3000000.00, 'Available');
-
 -- --------------------------------------------------------
 
 --
@@ -55,13 +48,6 @@ CREATE TABLE `pelanggan` (
   `Email` varchar(255) NOT NULL,
   `Address` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `pelanggan`
---
-
-INSERT INTO `pelanggan` (`CustomerID`, `FullName`, `PhoneNumber`, `Email`, `Address`) VALUES
-(6, 'yaya', '087668658568', 'fsffs@dsfsfs', 'cbdfbdf');
 
 -- --------------------------------------------------------
 
@@ -89,15 +75,8 @@ CREATE TABLE `reservasi` (
   `RoomID` int(11) NOT NULL,
   `CheckInDate` date NOT NULL,
   `CheckOutDate` date NOT NULL,
-  `Status` enum('Pending','Confirmed','Cancelled') DEFAULT 'Pending'
+  `Status` enum('Pending','Confirmed','Cancelled','CheckIn','CheckOut','Selesai') DEFAULT 'Pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `reservasi`
---
-
-INSERT INTO `reservasi` (`ReservationID`, `CustomerID`, `RoomID`, `CheckInDate`, `CheckOutDate`, `Status`) VALUES
-(2, 6, 7, '2025-01-11', '2025-01-20', 'Pending');
 
 -- --------------------------------------------------------
 
@@ -110,13 +89,6 @@ CREATE TABLE `roomtype` (
   `RoomType` varchar(100) NOT NULL,
   `DefaultPrice` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `roomtype`
---
-
-INSERT INTO `roomtype` (`RoomTypeID`, `RoomType`, `DefaultPrice`) VALUES
-(1, 'ekslusif', 3000000.00);
 
 -- --------------------------------------------------------
 
@@ -187,13 +159,13 @@ ALTER TABLE `ulasan`
 -- AUTO_INCREMENT for table `kamar`
 --
 ALTER TABLE `kamar`
-  MODIFY `RoomID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `RoomID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `pelanggan`
 --
 ALTER TABLE `pelanggan`
-  MODIFY `CustomerID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `CustomerID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `pembayaran`
@@ -205,13 +177,13 @@ ALTER TABLE `pembayaran`
 -- AUTO_INCREMENT for table `reservasi`
 --
 ALTER TABLE `reservasi`
-  MODIFY `ReservationID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `ReservationID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `roomtype`
 --
 ALTER TABLE `roomtype`
-  MODIFY `RoomTypeID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `RoomTypeID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `ulasan`
