@@ -1,27 +1,41 @@
 <?php
-include('../includes/db_connect.php');
+  include('../includes/db_connect.php');
 
-if (isset($_GET['id'])) {
-    $reservation_id = $_GET['id'];
+  // Cek apakah ID reservasi diterima dalam parameter
+  if (isset($_GET['id'])) {
+      $reservation_id = $_GET['id'];
+      
+      // Query untuk mendapatkan status reservasi berdasarkan ID
+      $sql = "SELECT Status FROM reservasi WHERE ReservationID = ?";
+      $stmt = $conn->prepare($sql);
+      $stmt->bind_param("i", $reservation_id);
+      $stmt->execute();
+      $result = $stmt->get_result();
 
-    // Update status reservasi menjadi "CheckedOut"
-    $update_reservasi_sql = "UPDATE reservasi SET Status = 'CheckedOut' WHERE ReservationID = ?";
-    $stmt = $conn->prepare($update_reservasi_sql);
-    $stmt->bind_param("i", $reservation_id);
-    if ($stmt->execute()) {
-        // Setelah check-out, ubah status kamar menjadi "Available"
-        $update_kamar_sql = "UPDATE kamar SET Status = 'Available' WHERE RoomID IN (SELECT RoomID FROM reservasi WHERE ReservationID = ?)";
-        $update_stmt = $conn->prepare($update_kamar_sql);
-        $update_stmt->bind_param("i", $reservation_id);
-        $update_stmt->execute();
+      if ($result->num_rows > 0) {
+          $row = $result->fetch_assoc();
 
-        header("Location: reservasi_list.php");
-        exit;
-    } else {
-        echo "Terjadi kesalahan saat check-out.";
-    }
-} else {
-    echo "ID reservasi tidak ditemukan!";
-    exit;
-}
+          // Pastikan hanya status "CheckIn" yang bisa diubah menjadi "CheckedOut"
+          if ($row['Status'] == 'CheckIn') {
+              // Update status menjadi "CheckedOut"
+              $update_sql = "UPDATE reservasi SET Status = 'CheckOut' WHERE ReservationID = ?";
+              $update_stmt = $conn->prepare($update_sql);
+              $update_stmt->bind_param("i", $reservation_id);
+
+              if ($update_stmt->execute()) {
+                  // Setelah sukses, redirect ke halaman reservasi dan tampilkan pesan sukses
+                  header("Location: reservasi_list.php?message=Reservasi berhasil check-out");
+                  exit();
+              } else {
+                  echo "Terjadi kesalahan saat mengubah status reservasi.";
+              }
+          } else {
+              echo "Status reservasi tidak sesuai untuk check-out.";
+          }
+      } else {
+          echo "Reservasi tidak ditemukan.";
+      }
+  } else {
+      echo "ID Reservasi tidak ditemukan.";
+  }
 ?>

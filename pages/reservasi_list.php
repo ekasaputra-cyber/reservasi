@@ -1,7 +1,11 @@
-<?php include('../includes/db_connect.php'); ?>
+<?php
+include('../includes/db_connect.php');
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <?php include('../includes/header.php'); ?>
+
 <body>
   <main id="main" class="main">
     <div class="pagetitle">
@@ -49,14 +53,6 @@
 
                   if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
-                      // Jika status reservasi "Confirmed" atau "Paid", ubah status kamar menjadi "Occupied"
-                      if ($row['Status'] == 'Confirmed' || $row['Status'] == 'Paid') {
-                          $update_kamar_sql = "UPDATE kamar SET Status = 'Occupied' WHERE RoomID = ?";
-                          $stmt = $conn->prepare($update_kamar_sql);
-                          $stmt->bind_param("i", $row['RoomID']);
-                          $stmt->execute();
-                      }
-
                       echo "<tr>
                               <td>{$row['ReservationID']}</td>
                               <td>{$row['FullName']}</td>
@@ -65,18 +61,25 @@
                               <td>{$row['CheckOutDate']}</td>
                               <td>{$row['Status']}</td>
                               <td>";
-                      
+
                       // Tombol tindakan berdasarkan status reservasi
                       if ($row['Status'] == 'Pending') {
                           echo "<a href='reservasi_edit.php?id={$row['ReservationID']}'>Edit</a> |
                                 <a href='reservasi_batal.php?id={$row['ReservationID']}'>Batalkan</a>";
-                      } elseif ($row['Status'] == 'Confirmed' || $row['Status'] == 'Paid') {
-                          // Tombol "Check-In" jika belum check-in
-                          echo "<a href='cekin.php?id={$row['ReservationID']}'>Sudah Check-In</a>";
-                      } elseif ($row['Status'] == 'CheckedIn') {
-                          // Tombol "Check-Out" jika sudah check-in
-                          echo "<a href='cekout.php?id={$row['ReservationID']}'>Sudah Check-Out</a>";
+                      } elseif ($row['Status'] == 'Confirmed') {
+                          // Tombol "Check-In" jika status reservasi "Confirmed"
+                          echo "<a href='cekin.php?id={$row['ReservationID']}'>Check-In</a>";
+                      } elseif ($row['Status'] == 'CheckIn') {
+                          // Tombol "Check-Out" jika status reservasi "cekin"
+                          echo "<a href='cekout.php?id={$row['ReservationID']}'>Check-Out</a>";
+                      } elseif ($row['Status'] == 'CheckOut') {
+                          // setelah check-out
+                          echo "<a href='ulasan.php?id={$row['ReservationID']}'>Isi Ulasan</a>";
+                          // selesai                        
+                      } elseif ($row['Status'] == 'Selesai') {
+                        echo "Selesai";
                       }
+
                       echo "</td></tr>";
                     }
                   } else {
@@ -100,5 +103,4 @@
       new simpleDatatables.DataTable(".datatable");
     });
   </script>
-</body>
-</html>
+
